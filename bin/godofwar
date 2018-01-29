@@ -75,22 +75,23 @@ option_parser = OptionParser.new
 option_parser.banner = "#{"GodOfWar".bold} - Malicious Java WAR builder."
 option_parser.set_summary_indent '   '
 option_parser.separator "\nHelp menu:".underline
-option_parser.on('-g', '--generate PAYLOAD',
+option_parser.on('-p', '--payload PAYLOAD',
                  payload.payloads,
                  'Generates war from one of the available payloads'
 ) {|v| options[:payload] = v}
 
 option_parser.on('-H', '--HOST IP_ADDR',
-                 'Local or Remote IP address for the chosen payload.(used with -g/--generate)'
+                 'Local or Remote IP address for the chosen payload.(used with -p/--payload)'
 ) {|v| options[:host] = v}
 option_parser.on('-P', '--port PORT', Integer,
-                 'Local or Remote Port for the chosen payload.(used with -g/--generate)'
+                 'Local or Remote Port for the chosen payload.(used with -p/--payload)'
 ) {|v| options[:port] = v}
-option_parser.on('-v', '--version', 'Check current and latest version') { latest_version}
+option_parser.on('-l', '--list', 'list all available payloads.')
+option_parser.on('-v', '--version', 'Check current and latest version') { latest_version }
 option_parser.on('-h', '--help', 'Show this help message') {puts banner , option_parser; exit!}
 
 
-# godofwar -g revers_shell -l 1.1.1.1 -p 8080
+# godofwar -p revers_shell -H 1.1.1.1 -P 8080
 
 
 begin
